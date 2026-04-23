@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Ticker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0e1a;
+    --panel: #0f1629;
+    --border: #1e2d4a;
+    --green: #00e676;
+    --red: #ff1744;
+    --amber: #ffab00;
+    --cyan: #00e5ff;
+    --white: #e8f0fe;
+    --muted: #4a6080;
+    --glow-green: 0 0 8px rgba(0,230,118,0.5);
+    --glow-red: 0 0 8px rgba(255,23,68,0.5);
+  }
+
+  body {
+    background: var(--bg);
+    font-family: 'Barlow Condensed', sans-serif;
+    overflow: hidden;
+    height: 60px;
+    display: flex;
+    align-items: center;
+  }
+
+  .ticker-wrap {
+    width: 100%;
+    height: 60px;
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Left label badge */
+  .ticker-label {
+    flex-shrink: 0;
+    background: #ee0000;
+    color: #ffffff;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 2px;
+    padding: 0 14px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    text-transform: uppercase;
+    z-index: 10;
+    white-space: nowrap;
+    gap: 6px;
+    position: relative;
+  }
+
+  .ticker-label::after {
+    content: '';
+    position: absolute;
+    right: -12px;
+    top: 0;
+    width: 0;
+    height: 0;
+    border-top: 60px solid transparent;
+    border-left: 12px solid #ee0000;
+  }
+
+  .pulse-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* Scrolling track */
+  .ticker-scroll-outer {
+    flex: 1;
+    overflow: hidden;
+    height: 100%;
+    position: relative;
+    padding-left: 18px;
+  }
+
+  .ticker-scroll-outer::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 0;
+    width: 60px; height: 100%;
+    background: linear-gradient(to right, transparent, var(--panel));
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  .ticker-track {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    white-space: nowrap;
+    animation: ticker-scroll 45s linear infinite;
+    will-change: transform;
+  }
+
+  .ticker-track:hover {
+    animation-play-state: paused;
+  }
+
+  @keyframes ticker-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* Individual stock item */
+  .stock-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 28px 0 0;
+    cursor: default;
+    transition: opacity 0.2s;
+  }
+
+  .stock-item:hover { opacity: 0.75; }
+
+  .stock-symbol {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 1px;
+    color: var(--white);
+    text-transform: uppercase;
+  }
+
+  .stock-price {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    color: #b0c4de;
+  }
+
+  .stock-change {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .stock-change.up {
+    color: var(--green);
+    background: rgba(0,230,118,0.1);
+    text-shadow: var(--glow-green);
+  }
+
+  .stock-change.down {
+    color: var(--red);
+    background: rgba(255,23,68,0.1);
+    text-shadow: var(--glow-red);
+  }
+
+  .stock-change.flat {
+    color: var(--amber);
+    background: rgba(255,171,0,0.1);
+  }
+
+  /* Divider between stocks */
+  .stock-divider {
+    display: inline-block;
+    width: 1px;
+    height: 24px;
+    background: var(--border);
+    margin-right: 28px;
+    vertical-align: middle;
+  }
+
+  /* Timestamp */
+  .ticker-time {
+    flex-shrink: 0;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    padding: 0 14px;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+    border-left: 1px solid var(--border);
+    height: 100%;
+    display: flex;
+    align-items: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="ticker-wrap">
+  <div class="ticker-label">
+    <div class="pulse-dot"></div>
+    LIVE
+  </div>
+
+  <div class="ticker-scroll-outer">
+    <div class="ticker-track" id="tickerTrack">
+      <!-- JS fills this twice for seamless loop -->
+    </div>
+  </div>
+
+  <div class="ticker-time" id="tickerTime"></div>
+</div>
+
+<script>
+  // ── Stock data ──────────────────────────────────────────────────────────────
+  const stocks = [
+    { symbol: "IBM",   name: "IBM",            price: 232.47,  change: +1.83,  pct: +0.79  },
+    { symbol: "AAPL",  name: "Apple",          price: 189.52,  change: +2.14,  pct: +1.14  },
+    { symbol: "MSFT",  name: "Microsoft",      price: 415.38,  change: -3.21,  pct: -0.77  },
+    { symbol: "GOOGL", name: "Alphabet",       price: 173.91,  change: +0.57,  pct: +0.33  },
+    { symbol: "AMZN",  name: "Amazon",         price: 198.64,  change: -1.45,  pct: -0.72  },
+    { symbol: "NVDA",  name: "NVIDIA",         price: 875.12,  change: +18.43, pct: +2.15  },
+    { symbol: "META",  name: "Meta",           price: 521.77,  change: +4.92,  pct: +0.95  },
+    { symbol: "TSLA",  name: "Tesla",          price: 172.34,  change: -6.88,  pct: -3.84  },
+    { symbol: "JPM",   name: "JPMorgan",       price: 207.15,  change: +1.02,  pct: +0.49  },
+    { symbol: "V",     name: "Visa",           price: 285.40,  change: +0.00,  pct:  0.00  },
+    { symbol: "WMT",   name: "Walmart",        price: 68.93,   change: +0.38,  pct: +0.55  },
+    { symbol: "XOM",   name: "ExxonMobil",     price: 117.82,  change: -0.63,  pct: -0.53  },
+    { symbol: "UNH",   name: "UnitedHealth",   price: 523.10,  change: +3.70,  pct: +0.71  },
+    { symbol: "GS",    name: "Goldman Sachs",  price: 448.95,  change: -2.10,  pct: -0.47  },
+    { symbol: "DIS",   name: "Disney",         price: 114.60,  change: +1.55,  pct: +1.37  },
+  ];
+
+  // ── Render a single stock item ───────────────────────────────────────────────
+  function renderItem(s) {
+    const dir   = s.change > 0 ? 'up' : s.change < 0 ? 'down' : 'flat';
+    const arrow = s.change > 0 ? '▲' : s.change < 0 ? '▼' : '■';
+    const sign  = s.change > 0 ? '+' : '';
+    const pctStr = `${sign}${s.pct.toFixed(2)}%`;
+    const chgStr = `${sign}${Math.abs(s.change).toFixed(2)}`;
+    const priceStr = s.price.toFixed(2);
+
+    return `
+      <span class="stock-item" data-symbol="${s.symbol}">
+        <span class="stock-symbol">${s.symbol}</span>
+        <span class="stock-price">$${priceStr}</span>
+        <span class="stock-change ${dir}">${arrow} ${chgStr} &nbsp;${pctStr}</span>
+      </span>
+      <span class="stock-divider"></span>
+    `;
+  }
+
+  // ── Build track (doubled for seamless loop) ──────────────────────────────────
+  function buildTrack() {
+    const html = stocks.map(renderItem).join('');
+    const track = document.getElementById('tickerTrack');
+    track.innerHTML = html + html; // duplicate for infinite scroll
+  }
+
+  // ── Simulate live price drift ────────────────────────────────────────────────
+  function driftPrices() {
+    stocks.forEach(s => {
+      const delta  = (Math.random() - 0.50) * 0.25;
+      s.price      = Math.max(1, s.price + delta);
+      s.change    += delta;
+      s.pct        = (s.change / (s.price - s.change)) * 100;
+    });
+    buildTrack();
+  }
+
+  // ── Clock ────────────────────────────────────────────────────────────────────
+  function updateTime() {
+    const now = new Date();
+    const fmt  = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const date = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    document.getElementById('tickerTime').textContent = `NYSE  ${date}  ${fmt}`;
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────────────────
+  buildTrack();
+  updateTime();
+  setInterval(updateTime, 1000);
+  setInterval(driftPrices, 5000);  // refresh prices every 5 s
+</script>
+</body>
+</html>
